@@ -1,0 +1,71 @@
+# === JAMAIS SUR GITHUB ===
+.env
+.env.local
+.env.production
+.env.*.local
+
+# Certificats et secrets
+*.pem
+*.key
+*.crt
+*.p12
+secrets/
+
+# Dépendances — chaque dev fait npm install
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Utilitaires temporaires — ne pas commiter
+generate-hash.js
+tmp/
+temp/
+
+# Scripts de bootstrap machine locale
+setup.bat
+setup.ps1
+
+# Système
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+logs/
+*.log
+*.pid
+*.seed
+*.pid.lock
+
+# Build
+dist/
+build/
+
+# Tests / coverage
+coverage/
+.nyc_output/
+
+# Cache
+.cache/
+.eslintcache
+
+# Runtime local
+*.sqlite
+*.sqlite3
+
+# Archives
+*.zip
+*.tar
+*.tgz
+*.gz
+
+# Powershell history
+*.ps1_history

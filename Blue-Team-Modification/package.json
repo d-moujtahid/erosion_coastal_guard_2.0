@@ -1,0 +1,36 @@
+{
+  "name": "erosion-coastal-guard",
+  "version": "1.0.0",
+  "description": "Système de monitoring du recul du trait de côte — Agadir & Taghazout",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "keywords": [
+    "coastal",
+    "erosion",
+    "GPS",
+    "monitoring",
+    "agadir",
+    "taghazout"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-rate-limit": "^8.3.2",
+    "express-slow-down": "^3.1.0",
+    "helmet": "^8.1.0",
+    "hpp": "^0.2.3",
+    "jsonwebtoken": "^9.0.2",
+    "mysql2": "^3.9.7"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  }
+}

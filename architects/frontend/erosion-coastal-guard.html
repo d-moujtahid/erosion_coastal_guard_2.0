@@ -1,0 +1,1992 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Erosion-Coastal Guard — Agadir & Taghazout</title>
+
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+<!-- Chart.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+
+<style>
+/* ══════════════════════════════════════════
+   CSS VARIABLES — PALETTE OCÉANOGRAPHIQUE
+══════════════════════════════════════════ */
+:root {
+  --ocean-deep:    #040d1a;
+  --ocean-mid:     #071428;
+  --ocean-panel:   #0b1d38;
+  --ocean-card:    #0f2347;
+  --ocean-border:  #1a3a6b;
+  --teal-bright:   #00d4c8;
+  --teal-glow:     #00ffd0;
+  --teal-dim:      #1a8080;
+  --amber-alert:   #f59e0b;
+  --red-critical:  #ef4444;
+  --green-ok:      #22c55e;
+  --blue-data:     #3b82f6;
+  --text-primary:  #e8f4ff;
+  --text-muted:    #6b8cae;
+  --text-dim:      #3a5570;
+  --font-display:  'Syne', sans-serif;
+  --font-mono:     'Space Mono', monospace;
+  --font-body:     'DM Sans', sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--ocean-deep);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ══════════════════════════════════════════
+   NOISE TEXTURE OVERLAY
+══════════════════════════════════════════ */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 0;
+}
+
+/* ══════════════════════════════════════════
+   LOGIN SCREEN
+══════════════════════════════════════════ */
+#login-screen {
+  position: fixed; inset: 0;
+  background: var(--ocean-deep);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 9999;
+  transition: opacity 0.6s ease;
+}
+
+.login-bg-wave {
+  position: absolute; bottom: 0; left: 0; right: 0; height: 40%;
+  background: linear-gradient(180deg, transparent, rgba(0,212,200,0.04));
+  overflow: hidden;
+}
+
+.login-box {
+  width: 420px;
+  background: var(--ocean-panel);
+  border: 1px solid var(--ocean-border);
+  border-radius: 16px;
+  padding: 48px 40px;
+  position: relative;
+  box-shadow: 0 0 80px rgba(0,212,200,0.08), 0 40px 80px rgba(0,0,0,0.6);
+}
+
+.login-box::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, transparent, var(--teal-bright), transparent);
+  border-radius: 16px 16px 0 0;
+}
+
+.login-logo {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 32px;
+}
+
+.login-logo-icon {
+  width: 44px; height: 44px;
+  background: linear-gradient(135deg, var(--teal-bright), #0077aa);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+}
+
+.login-logo-text {
+  font-family: var(--font-display);
+  font-size: 18px; font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.login-logo-sub {
+  font-size: 11px; color: var(--text-muted);
+  font-family: var(--font-mono);
+  letter-spacing: 0.05em;
+}
+
+.login-title {
+  font-family: var(--font-display);
+  font-size: 26px; font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.login-subtitle {
+  font-size: 13px; color: var(--text-muted);
+  margin-bottom: 32px;
+}
+
+.login-field { margin-bottom: 16px; }
+
+.login-field label {
+  display: block;
+  font-size: 11px; font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: 0.08em; text-transform: uppercase;
+  margin-bottom: 6px;
+  font-family: var(--font-mono);
+}
+
+.login-field input {
+  width: 100%;
+  background: var(--ocean-deep);
+  border: 1px solid var(--ocean-border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  color: var(--text-primary);
+  font-family: var(--font-mono); font-size: 13px;
+  transition: border-color 0.2s;
+  outline: none;
+}
+
+.login-field input:focus {
+  border-color: var(--teal-bright);
+  box-shadow: 0 0 0 3px rgba(0,212,200,0.12);
+}
+
+.login-roles {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.role-chip {
+  padding: 4px 10px; border-radius: 20px;
+  font-size: 11px; font-family: var(--font-mono);
+  cursor: pointer; border: 1px solid var(--ocean-border);
+  background: var(--ocean-card); color: var(--text-muted);
+  transition: all 0.2s;
+}
+.role-chip:hover, .role-chip.active {
+  border-color: var(--teal-bright);
+  color: var(--teal-bright);
+  background: rgba(0,212,200,0.08);
+}
+
+.login-btn {
+  width: 100%;
+  background: linear-gradient(135deg, var(--teal-bright), #0099aa);
+  border: none; border-radius: 10px;
+  padding: 14px;
+  color: var(--ocean-deep);
+  font-family: var(--font-display); font-size: 15px; font-weight: 700;
+  cursor: pointer; letter-spacing: 0.02em;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.login-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(0,212,200,0.3);
+}
+.login-btn:active { transform: translateY(0); }
+
+/* ══════════════════════════════════════════
+   MAIN DASHBOARD
+══════════════════════════════════════════ */
+#dashboard { display: none; min-height: 100vh; flex-direction: column; }
+#dashboard.visible { display: flex; }
+
+/* TOP NAV */
+.topnav {
+  height: 60px;
+  background: rgba(7,20,40,0.95);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--ocean-border);
+  display: flex; align-items: center;
+  padding: 0 24px; gap: 20px;
+  position: sticky; top: 0; z-index: 100;
+}
+
+.nav-logo {
+  display: flex; align-items: center; gap: 10px;
+  font-family: var(--font-display); font-weight: 800;
+  font-size: 15px; color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.nav-logo-icon {
+  width: 32px; height: 32px;
+  background: linear-gradient(135deg, var(--teal-bright), #006688);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+}
+
+.nav-divider {
+  width: 1px; height: 28px;
+  background: var(--ocean-border);
+}
+
+.nav-tabs {
+  display: flex; gap: 4px; flex: 1;
+}
+
+.nav-tab {
+  padding: 7px 16px; border-radius: 8px;
+  font-size: 13px; font-weight: 500;
+  cursor: pointer; border: none;
+  background: transparent; color: var(--text-muted);
+  transition: all 0.2s; font-family: var(--font-body);
+}
+.nav-tab:hover { color: var(--text-primary); background: rgba(255,255,255,0.05); }
+.nav-tab.active {
+  background: rgba(0,212,200,0.12);
+  color: var(--teal-bright);
+}
+
+.nav-right {
+  display: flex; align-items: center; gap: 12px; margin-left: auto;
+}
+
+.nav-badge {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 12px; border-radius: 20px;
+  background: rgba(0,212,200,0.1); border: 1px solid rgba(0,212,200,0.2);
+  font-size: 12px; font-family: var(--font-mono);
+  color: var(--teal-bright);
+}
+
+.nav-alert-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--red-critical);
+  animation: pulse-red 1.5s infinite;
+}
+
+@keyframes pulse-red {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
+  50% { opacity: 0.8; box-shadow: 0 0 0 6px transparent; }
+}
+
+.nav-user {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; color: var(--text-muted);
+}
+
+.nav-avatar {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: linear-gradient(135deg, #1a4a6b, #0d3050);
+  border: 1px solid var(--ocean-border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 600; color: var(--teal-bright);
+  font-family: var(--font-mono);
+}
+
+.logout-btn {
+  padding: 5px 12px; border-radius: 6px;
+  background: transparent; border: 1px solid var(--ocean-border);
+  color: var(--text-muted); font-size: 12px;
+  cursor: pointer; transition: all 0.2s;
+  font-family: var(--font-mono);
+}
+.logout-btn:hover { border-color: var(--red-critical); color: var(--red-critical); }
+
+/* ══════════════════════════════════════════
+   PAGE CONTENT
+══════════════════════════════════════════ */
+.page { display: none; flex: 1; }
+.page.active { display: block; }
+
+/* ── PAGE: OVERVIEW ── */
+.overview-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: auto auto auto;
+  gap: 16px;
+  padding: 20px 24px;
+  max-width: 1600px;
+}
+
+/* STAT CARDS */
+.stat-row {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+}
+
+.stat-card {
+  background: var(--ocean-panel);
+  border: 1px solid var(--ocean-border);
+  border-radius: 12px;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s, border-color 0.2s;
+  animation: fadeUp 0.5s ease both;
+}
+.stat-card:hover { transform: translateY(-2px); border-color: var(--teal-dim); }
+
+.stat-card::after {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+}
+.stat-card.teal::after { background: linear-gradient(90deg, var(--teal-bright), transparent); }
+.stat-card.amber::after { background: linear-gradient(90deg, var(--amber-alert), transparent); }
+.stat-card.red::after { background: linear-gradient(90deg, var(--red-critical), transparent); }
+.stat-card.blue::after { background: linear-gradient(90deg, var(--blue-data), transparent); }
+.stat-card.green::after { background: linear-gradient(90deg, var(--green-ok), transparent); }
+
+.stat-icon {
+  font-size: 22px; margin-bottom: 12px;
+  display: block;
+}
+
+.stat-label {
+  font-size: 11px; font-family: var(--font-mono);
+  color: var(--text-muted); text-transform: uppercase;
+  letter-spacing: 0.06em; margin-bottom: 6px;
+}
+
+.stat-value {
+  font-family: var(--font-display); font-size: 32px; font-weight: 800;
+  line-height: 1; color: var(--text-primary);
+}
+
+.stat-unit {
+  font-size: 13px; color: var(--text-muted);
+  font-family: var(--font-mono); margin-left: 4px;
+}
+
+.stat-trend {
+  font-size: 11px; margin-top: 8px;
+  font-family: var(--font-mono);
+}
+.stat-trend.up { color: var(--red-critical); }
+.stat-trend.down { color: var(--green-ok); }
+.stat-trend.neutral { color: var(--text-muted); }
+
+/* MAP CARD */
+.map-card {
+  grid-column: 1 / 3;
+  background: var(--ocean-panel);
+  border: 1px solid var(--ocean-border);
+  border-radius: 12px;
+  overflow: hidden;
+  min-height: 420px;
+}
+
+.card-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--ocean-border);
+  display: flex; align-items: center; gap: 10px;
+}
+
+.card-title {
+  font-family: var(--font-display); font-size: 14px; font-weight: 700;
+  color: var(--text-primary);
+}
+
+.card-subtitle {
+  font-size: 11px; font-family: var(--font-mono);
+  color: var(--text-muted); margin-left: auto;
+}
+
+.card-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+}
+.card-dot.live {
+  background: var(--teal-bright);
+  animation: pulse-teal 2s infinite;
+}
+@keyframes pulse-teal {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0,212,200,0.4); }
+  50% { box-shadow: 0 0 0 5px transparent; }
+}
+
+#coastal-map { height: 430px; background: #061020; position: relative; }
+
+.map-legend {
+  padding: 10px 20px;
+  border-top: 1px solid var(--ocean-border);
+  display: flex; gap: 20px; align-items: center;
+}
+
+.legend-item {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11px; font-family: var(--font-mono); color: var(--text-muted);
+}
+
+.legend-line {
+  width: 24px; height: 3px; border-radius: 2px;
+}
+
+/* ALERTS PANEL */
+.alerts-card {
+  grid-column: 3;
+  background: var(--ocean-panel);
+  border: 1px solid var(--ocean-border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.alerts-list { padding: 8px; max-height: 340px; overflow-y: auto; }
+.alerts-list::-webkit-scrollbar { width: 4px; }
+.alerts-list::-webkit-scrollbar-track { background: transparent; }
+.alerts-list::-webkit-scrollbar-thumb { background: var(--ocean-border); border-radius: 2px; }
+
+.alert-item {
+  padding: 12px 14px; border-radius: 8px;
+  border: 1px solid transparent;
+  margin-bottom: 6px; cursor: pointer;
+  transition: all 0.2s; position: relative;
+}
+.alert-item::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+  width: 3px; border-radius: 0 2px 2px 0;
+}
+.alert-item.critical {
+  background: rgba(239,68,68,0.08);
+  border-color: rgba(239,68,68,0.2);
+}
+.alert-item.critical::before { background: var(--red-critical); }
+.alert-item.warning {
+  background: rgba(245,158,11,0.08);
+  border-color: rgba(245,158,11,0.2);
+}
+.alert-item.warning::before { background: var(--amber-alert); }
+.alert-item.info {
+  background: rgba(59,130,246,0.08);
+  border-color: rgba(59,130,246,0.2);
+}
+.alert-item.info::before { background: var(--blue-data); }
+
+.alert-item:hover { transform: translateX(3px); }
+
+.alert-level {
+  font-size: 9px; font-family: var(--font-mono);
+  text-transform: uppercase; letter-spacing: 0.1em;
+  font-weight: 700; margin-bottom: 4px;
+}
+.alert-item.critical .alert-level { color: var(--red-critical); }
+.alert-item.warning .alert-level { color: var(--amber-alert); }
+.alert-item.info .alert-level { color: var(--blue-data); }
+
+.alert-text {
+  font-size: 12px; color: var(--text-primary); line-height: 1.4;
+  margin-bottom: 4px;
+}
+
+.alert-meta {
+  font-size: 10px; font-family: var(--font-mono); color: var(--text-dim);
+}
+
+/* CHART CARDS */
+.chart-card {
+  background: var(--ocean-panel);
+  border: 1px solid var(--ocean-border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.chart-body { padding: 16px; }
+.chart-body canvas { max-height: 200px; }
+
+/* ── PAGE: MAP ── */
+.map-full-page { height: calc(100vh - 60px); display: flex; flex-direction: column; }
+#full-map { flex: 1; }
+
+.map-sidebar {
+  position: absolute; right: 24px; top: 80px; width: 280px;
+  z-index: 500;
+  display: flex; flex-direction: column; gap: 12px;
+}
+
+.sidebar-card {
+  background: rgba(11,29,56,0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--ocean-border);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.sidebar-title {
+  font-family: var(--font-display); font-size: 13px; font-weight: 700;
+  margin-bottom: 12px; color: var(--text-primary);
+}
+
+.segment-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 10px; border-radius: 8px;
+  margin-bottom: 4px; cursor: pointer;
+  background: var(--ocean-card);
+  border: 1px solid var(--ocean-border);
+  transition: all 0.2s;
+}
+.segment-item:hover { border-color: var(--teal-bright); }
+
+.segment-name { font-size: 12px; font-weight: 500; }
+
+.seg-badge {
+  font-size: 10px; font-family: var(--font-mono);
+  padding: 2px 8px; border-radius: 10px;
+}
+.seg-badge.critique { background: rgba(239,68,68,0.2); color: var(--red-critical); }
+.seg-badge.modere { background: rgba(245,158,11,0.2); color: var(--amber-alert); }
+.seg-badge.stable { background: rgba(34,197,94,0.2); color: var(--green-ok); }
+
+/* ── PAGE: DATA ── */
+.data-page { padding: 24px; }
+
+.data-header {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 24px; flex-wrap: wrap;
+}
+
+.data-title {
+  font-family: var(--font-display); font-size: 22px; font-weight: 800;
+  color: var(--text-primary);
+}
+
+.data-filter {
+  margin-left: auto;
+  display: flex; gap: 8px;
+}
+
+.filter-btn {
+  padding: 7px 14px; border-radius: 8px;
+  background: var(--ocean-panel); border: 1px solid var(--ocean-border);
+  color: var(--text-muted); font-size: 12px;
+  cursor: pointer; font-family: var(--font-mono);
+  transition: all 0.2s;
+}
+.filter-btn:hover, .filter-btn.active {
+  border-color: var(--teal-bright); color: var(--teal-bright);
+}
+
+.data-table-wrap {
+  background: var(--ocean-panel);
+  border: 1px solid var(--ocean-border);
+  border-radius: 12px; overflow: hidden;
+}
+
+table { width: 100%; border-collapse: collapse; }
+thead { background: var(--ocean-card); }
+
+th {
+  padding: 12px 16px; text-align: left;
+  font-size: 10px; font-family: var(--font-mono);
+  text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--ocean-border);
+}
+
+td {
+  padding: 13px 16px;
+  font-size: 13px; color: var(--text-primary);
+  border-bottom: 1px solid rgba(26,58,107,0.4);
+  font-family: var(--font-mono);
+}
+
+tr:last-child td { border-bottom: none; }
+
+tr:hover td { background: rgba(0,212,200,0.03); }
+
+.td-badge {
+  display: inline-block;
+  padding: 3px 10px; border-radius: 12px;
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.06em;
+}
+.td-badge.critique { background: rgba(239,68,68,0.15); color: var(--red-critical); }
+.td-badge.modere { background: rgba(245,158,11,0.15); color: var(--amber-alert); }
+.td-badge.stable { background: rgba(34,197,94,0.15); color: var(--green-ok); }
+
+.recul-bar-wrap { display: flex; align-items: center; gap: 8px; }
+.recul-bar {
+  height: 6px; border-radius: 3px; flex: 1;
+  background: var(--ocean-deep);
+  overflow: hidden; max-width: 80px;
+}
+.recul-bar-fill { height: 100%; border-radius: 3px; }
+.recul-bar-fill.high { background: var(--red-critical); }
+.recul-bar-fill.med { background: var(--amber-alert); }
+.recul-bar-fill.low { background: var(--green-ok); }
+
+/* ── PAGE: MESURES ── */
+.mesures-page { padding: 24px; }
+
+.mesures-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 16px; margin-top: 20px;
+}
+
+/* ── PAGE: RAPPORT ── */
+.rapport-page { padding: 24px; }
+
+.rapport-header {
+  background: var(--ocean-panel);
+  border: 1px solid var(--ocean-border);
+  border-radius: 12px;
+  padding: 32px;
+  margin-bottom: 20px;
+  position: relative; overflow: hidden;
+}
+
+.rapport-header::before {
+  content: '';
+  position: absolute; top: -40px; right: -40px;
+  width: 200px; height: 200px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(0,212,200,0.07), transparent 70%);
+}
+
+.rapport-title {
+  font-family: var(--font-display); font-size: 28px; font-weight: 800;
+  color: var(--text-primary); margin-bottom: 6px;
+}
+
+.rapport-meta {
+  font-size: 12px; font-family: var(--font-mono);
+  color: var(--text-muted); margin-bottom: 20px;
+}
+
+.rapport-kpis {
+  display: flex; gap: 32px; flex-wrap: wrap;
+}
+
+.rapport-kpi {
+  display: flex; flex-direction: column; gap: 2px;
+}
+
+.kpi-label {
+  font-size: 10px; font-family: var(--font-mono);
+  text-transform: uppercase; color: var(--text-muted);
+  letter-spacing: 0.07em;
+}
+
+.kpi-val {
+  font-family: var(--font-display); font-size: 24px; font-weight: 800;
+  color: var(--teal-bright);
+}
+
+.kpi-val.red { color: var(--red-critical); }
+.kpi-val.amber { color: var(--amber-alert); }
+
+.rapport-section {
+  background: var(--ocean-panel);
+  border: 1px solid var(--ocean-border);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 16px;
+}
+
+.section-title {
+  font-family: var(--font-display); font-size: 16px; font-weight: 700;
+  color: var(--text-primary); margin-bottom: 16px;
+  display: flex; align-items: center; gap: 8px;
+}
+
+.section-title::before {
+  content: ''; display: block;
+  width: 4px; height: 18px; border-radius: 2px;
+  background: var(--teal-bright);
+}
+
+.rapport-text {
+  font-size: 14px; line-height: 1.7; color: var(--text-muted);
+  max-width: 700px;
+}
+
+.reco-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.reco-item {
+  display: flex; gap: 12px; align-items: flex-start;
+  padding: 12px 14px; border-radius: 8px;
+  background: var(--ocean-card);
+  border: 1px solid var(--ocean-border);
+  font-size: 13px; color: var(--text-primary);
+  line-height: 1.5;
+}
+.reco-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+
+/* ══════════════════════════════════════════
+   ANIMATIONS
+══════════════════════════════════════════ */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.stat-card:nth-child(1) { animation-delay: 0.05s; }
+.stat-card:nth-child(2) { animation-delay: 0.10s; }
+.stat-card:nth-child(3) { animation-delay: 0.15s; }
+.stat-card:nth-child(4) { animation-delay: 0.20s; }
+.stat-card:nth-child(5) { animation-delay: 0.25s; }
+
+/* ══════════════════════════════════════════
+   SCIENTIFIC MAP OVERLAYS
+══════════════════════════════════════════ */
+.map-sci-overlay {
+  position: absolute;
+  z-index: 400;
+  font-family: 'Space Mono', monospace;
+  pointer-events: none;
+}
+
+.map-sci-header {
+  top: 0; left: 0; right: 0;
+  background: rgba(4,13,26,0.90);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(0,212,200,0.35);
+  padding: 9px 14px;
+  display: flex; align-items: center; gap: 8px;
+  color: var(--teal-bright);
+  font-size: 11px; letter-spacing: 0.10em;
+}
+
+.map-live-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--teal-bright); display: inline-block; flex-shrink: 0;
+  animation: pulse-teal 2s infinite;
+}
+
+.map-sci-coords {
+  top: 48px; left: 10px;
+  background: rgba(4,13,26,0.82);
+  border: 1px solid rgba(0,212,200,0.22);
+  border-radius: 6px; padding: 9px 13px;
+  font-size: 10px; letter-spacing: 0.04em; line-height: 1.9;
+}
+
+.map-sci-legend {
+  top: 48px; right: 10px;
+  background: rgba(4,13,26,0.90);
+  border: 1px solid rgba(0,212,200,0.28);
+  border-radius: 10px; padding: 14px 16px;
+  min-width: 206px; pointer-events: auto;
+}
+
+.msl-title {
+  font-size: 11px; letter-spacing: 0.12em;
+  color: var(--teal-bright); margin-bottom: 11px; font-weight: 700;
+}
+
+.msl-row {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 8px; font-size: 10px;
+  color: #8cadc8; letter-spacing: 0.04em;
+}
+
+.msl-sep { height: 1px; background: var(--ocean-border); margin: 9px 0; }
+
+.msl-line { width: 28px; flex-shrink: 0; }
+.msl-line.teal { height: 2.5px; background: #00d4c8; box-shadow: 0 0 5px rgba(0,212,200,0.6); }
+.msl-line.dashed-blue { height: 0; border-top: 2px dashed #7ec8e3; opacity: 0.85; }
+.msl-line.dashed-red { height: 0; border-top: 2px dashed #ff7070; opacity: 0.65; }
+
+.msl-dot {
+  width: 13px; height: 13px; border-radius: 50%; flex-shrink: 0; border: 2px dashed;
+}
+.msl-dot.red   { background: rgba(239,68,68,0.5);  border-color:#ef4444; box-shadow:0 0 7px rgba(239,68,68,0.7); }
+.msl-dot.orange{ background: rgba(245,158,11,0.5); border-color:#f59e0b; box-shadow:0 0 6px rgba(245,158,11,0.6); }
+.msl-dot.green { background: rgba(34,197,94,0.18); border-color:#22c55e; }
+
+/* Segment markers */
+.seg-marker { transition: transform 0.2s; }
+.seg-marker:hover { transform: scale(1.25); }
+
+@keyframes segPulseCrit {
+  0%,100% { box-shadow:0 0 10px rgba(239,68,68,.9),0 0 22px rgba(239,68,68,.35); }
+  50%      { box-shadow:0 0 20px rgba(239,68,68,1), 0 0 40px rgba(239,68,68,.55); }
+}
+@keyframes segPulseWarn {
+  0%,100% { box-shadow:0 0 9px rgba(245,158,11,.8),0 0 18px rgba(245,158,11,.3); }
+  50%     { box-shadow:0 0 17px rgba(245,158,11,1),0 0 32px rgba(245,158,11,.5); }
+}
+@keyframes segPulseStable {
+  0%,100% { box-shadow:0 0 6px rgba(34,197,94,.5); }
+  50%     { box-shadow:0 0 12px rgba(34,197,94,.8); }
+}
+
+.pulse-critical { animation: segPulseCrit 1.8s infinite; }
+.pulse-warning  { animation: segPulseWarn 2.4s infinite; }
+.pulse-stable   { animation: segPulseStable 3s infinite; }
+
+/* Leaflet popup dark theme */
+.leaflet-popup-content-wrapper {
+  background: rgba(11,29,56,0.97) !important;
+  border: 1px solid rgba(0,212,200,0.35) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.7) !important;
+  color: #e8f4ff !important;
+}
+.leaflet-popup-tip { background: #0b1d38 !important; }
+.leaflet-popup-close-button { color: #6b8cae !important; }
+
+/* ══════════════════════════════════════════
+   SCROLLBAR
+══════════════════════════════════════════ */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--ocean-deep); }
+::-webkit-scrollbar-thumb { background: var(--ocean-border); border-radius: 3px; }
+
+/* ══════════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════════ */
+@media (max-width: 1200px) {
+  .overview-grid { grid-template-columns: 1fr 1fr; }
+  .map-card { grid-column: 1 / -1; }
+  .alerts-card { grid-column: 1 / -1; }
+  .stat-row { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 768px) {
+  .stat-row { grid-template-columns: 1fr 1fr; }
+  .overview-grid { padding: 12px; gap: 12px; }
+  .mesures-grid { grid-template-columns: 1fr; }
+  .login-box { width: 90%; padding: 32px 24px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     LOGIN SCREEN
+══════════════════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-bg-wave"></div>
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="login-logo-icon">🌊</div>
+      <div>
+        <div class="login-logo-text">Erosion-Coastal Guard</div>
+        <div class="login-logo-sub">SOUSS-MASSA RESILIENCE PROTOTYPE</div>
+      </div>
+    </div>
+
+    <div class="login-title">Connexion</div>
+    <div class="login-subtitle">Système de monitoring du littoral · Agadir & Taghazout</div>
+
+    <div class="login-field">
+      <label>Email</label>
+      <input type="email" id="login-email" placeholder="admin@erosion.ma"/>
+    </div>
+    <div class="login-field">
+      <label>Mot de passe</label>
+      <input type="password" id="login-pwd" placeholder="••••••••"
+        onkeydown="if(event.key==='Enter') doLogin()"/>
+    </div>
+
+    <div style="font-size:11px;font-family:var(--font-mono);color:var(--text-dim);margin-bottom:20px;line-height:1.7;">
+      Comptes de test · mot de passe : <span style="color:var(--teal-bright)">Test2025!</span><br/>
+      admin@erosion.ma · scientist@erosion.ma · viewer@erosion.ma
+    </div>
+
+    <button class="login-btn" onclick="doLogin()">Accéder au Dashboard →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     MAIN DASHBOARD
+══════════════════════════════════════════ -->
+<div id="dashboard">
+
+  <!-- TOP NAV -->
+  <nav class="topnav">
+    <div class="nav-logo">
+      <div class="nav-logo-icon">🌊</div>
+      Erosion-Coastal Guard
+    </div>
+    <div class="nav-divider"></div>
+    <div class="nav-tabs">
+      <button class="nav-tab active" onclick="showPage('overview',this)">Vue d'ensemble</button>
+      <button class="nav-tab" onclick="showPage('mappage',this)">Carte Côtière</button>
+      <button class="nav-tab" onclick="showPage('data',this)">Segments & Données</button>
+      <button class="nav-tab" onclick="showPage('mesures',this)">Mesures GPS</button>
+      <button class="nav-tab" onclick="showPage('rapport',this)">Rapport 2016–2026</button>
+    </div>
+    <div class="nav-right">
+      <div class="nav-badge">
+        <div class="nav-alert-dot"></div>
+        <span id="alert-count">3 alertes</span>
+      </div>
+      <div class="nav-user">
+        <div class="nav-avatar" id="nav-avatar">SA</div>
+        <span id="nav-username" style="font-family:var(--font-mono);font-size:12px;">super_admin</span>
+      </div>
+      <button class="logout-btn" onclick="doLogout()">Déconnexion</button>
+    </div>
+  </nav>
+
+  <!-- ── PAGE: OVERVIEW ── -->
+  <div class="page active" id="page-overview">
+    <div class="overview-grid">
+
+      <!-- STAT CARDS -->
+      <div class="stat-row">
+        <div class="stat-card teal">
+          <span class="stat-icon">🗺️</span>
+          <div class="stat-label">Segments Surveillés</div>
+          <div class="stat-value">12<span class="stat-unit">seg</span></div>
+          <div class="stat-trend neutral">↔ Agadir + Taghazout</div>
+        </div>
+        <div class="stat-card red">
+          <span class="stat-icon">📉</span>
+          <div class="stat-label">Recul Moyen 10 ans</div>
+          <div class="stat-value">4.7<span class="stat-unit">m/an</span></div>
+          <div class="stat-trend up">▲ +0.8 vs 2020</div>
+        </div>
+        <div class="stat-card amber">
+          <span class="stat-icon">⚠️</span>
+          <div class="stat-label">Zones Critiques</div>
+          <div class="stat-value">4<span class="stat-unit">zones</span></div>
+          <div class="stat-trend up">▲ +2 cette année</div>
+        </div>
+        <div class="stat-card blue">
+          <span class="stat-icon">📍</span>
+          <div class="stat-label">Mesures GPS</div>
+          <div class="stat-value">1.8<span class="stat-unit">k pts</span></div>
+          <div class="stat-trend neutral">↔ 2016–2026</div>
+        </div>
+        <div class="stat-card green">
+          <span class="stat-icon">✅</span>
+          <div class="stat-label">Segments Stables</div>
+          <div class="stat-value">5<span class="stat-unit">seg</span></div>
+          <div class="stat-trend down">▼ -1 vs 2024</div>
+        </div>
+      </div>
+
+      <!-- MAP CARD -->
+      <div class="map-card" style="overflow:hidden;">
+        <div id="coastal-map" style="position:relative;"></div>
+      </div>
+
+      <!-- ALERTS -->
+      <div class="alerts-card">
+        <div class="card-header">
+          <div class="card-dot live"></div>
+          <div class="card-title">Alertes Actives</div>
+          <div class="card-subtitle">Dernières 24h</div>
+        </div>
+        <div class="alerts-list" id="alerts-list"></div>
+      </div>
+
+      <!-- CHART: Recul par segment -->
+      <div class="chart-card">
+        <div class="card-header">
+          <div class="card-title">📊 Recul Côtier par Segment (m)</div>
+          <div class="card-subtitle">2016→2026</div>
+        </div>
+        <div class="chart-body">
+          <canvas id="chart-recul"></canvas>
+        </div>
+      </div>
+
+      <!-- CHART: Evolution temporelle -->
+      <div class="chart-card">
+        <div class="card-header">
+          <div class="card-title">📈 Évolution Annuelle du Recul</div>
+          <div class="card-subtitle">m/an · Tendance 10 ans</div>
+        </div>
+        <div class="chart-body">
+          <canvas id="chart-evolution"></canvas>
+        </div>
+      </div>
+
+      <!-- CHART: Répartition statuts -->
+      <div class="chart-card">
+        <div class="card-header">
+          <div class="card-title">🎯 Statuts des Segments</div>
+          <div class="card-subtitle">Distribution 2026</div>
+        </div>
+        <div class="chart-body" style="display:flex;align-items:center;justify-content:center;">
+          <canvas id="chart-statuts" style="max-height:180px; max-width:180px;"></canvas>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── PAGE: MAP FULL ── -->
+  <div class="page" id="page-mappage" style="position:relative;">
+    <div class="map-full-page">
+      <div id="full-map"></div>
+    </div>
+    <div class="map-sidebar">
+      <div class="sidebar-card">
+        <div class="sidebar-title">🗺️ Segments Côtiers</div>
+        <div id="segment-list-sidebar"></div>
+      </div>
+      <div class="sidebar-card">
+        <div class="sidebar-title">📡 Filtres Carte</div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <label style="display:flex;align-items:center;gap:8px;font-size:12px;font-family:var(--font-mono);color:var(--text-muted);cursor:pointer;">
+            <input type="checkbox" checked onchange="toggleLayer('2016')" style="accent-color:var(--red-critical);">
+            Trait de côte 2016
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:12px;font-family:var(--font-mono);color:var(--text-muted);cursor:pointer;">
+            <input type="checkbox" checked onchange="toggleLayer('2026')" style="accent-color:var(--teal-bright);">
+            Trait de côte 2026
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:12px;font-family:var(--font-mono);color:var(--text-muted);cursor:pointer;">
+            <input type="checkbox" checked onchange="toggleLayer('pts')" style="accent-color:var(--blue-data);">
+            Points GPS Mesures
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PAGE: DATA TABLE ── -->
+  <div class="page" id="page-data">
+    <div class="data-page">
+      <div class="data-header">
+        <div class="data-title">Segments Côtiers</div>
+        <div class="data-filter">
+          <button class="filter-btn active" onclick="filterData('all',this)">Tous</button>
+          <button class="filter-btn" onclick="filterData('critique',this)">Critique</button>
+          <button class="filter-btn" onclick="filterData('modere',this)">Modéré</button>
+          <button class="filter-btn" onclick="filterData('stable',this)">Stable</button>
+        </div>
+      </div>
+      <div class="data-table-wrap">
+        <table id="segments-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nom du Segment</th>
+              <th>Zone</th>
+              <th>Longueur (km)</th>
+              <th>Recul 2016→2026</th>
+              <th>Taux (m/an)</th>
+              <th>Statut</th>
+              <th>Dernière Mesure</th>
+            </tr>
+          </thead>
+          <tbody id="segments-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PAGE: MESURES GPS ── -->
+  <div class="page" id="page-mesures">
+    <div class="mesures-page">
+      <div style="margin-bottom:20px;">
+        <div class="data-title" style="font-family:var(--font-display);font-size:22px;font-weight:800;margin-bottom:4px;">Mesures GPS</div>
+        <div style="font-size:12px;font-family:var(--font-mono);color:var(--text-muted);">
+          Points de collecte terrain · Haversine · 1846 entrées
+        </div>
+      </div>
+      <div class="mesures-grid">
+        <div class="chart-card">
+          <div class="card-header">
+            <div class="card-title">📍 Répartition Temporelle des Mesures</div>
+          </div>
+          <div class="chart-body">
+            <canvas id="chart-mesures-temps"></canvas>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="card-header">
+            <div class="card-title">🔢 Distance Haversine par Segment</div>
+            <div class="card-subtitle">m déplacés</div>
+          </div>
+          <div class="chart-body">
+            <canvas id="chart-haversine"></canvas>
+          </div>
+        </div>
+        <div class="chart-card" style="grid-column:1/-1;">
+          <div class="card-header">
+            <div class="card-title">📋 Dernières Mesures GPS Enregistrées</div>
+          </div>
+          <div class="chart-body" style="padding:0;">
+            <table style="width:100%;border-collapse:collapse;">
+              <thead>
+                <tr>
+                  <th style="padding:12px 16px;text-align:left;font-size:10px;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);border-bottom:1px solid var(--ocean-border);background:var(--ocean-card);">ID Mesure</th>
+                  <th style="padding:12px 16px;text-align:left;font-size:10px;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);border-bottom:1px solid var(--ocean-border);background:var(--ocean-card);">Segment</th>
+                  <th style="padding:12px 16px;text-align:left;font-size:10px;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);border-bottom:1px solid var(--ocean-border);background:var(--ocean-card);">Latitude</th>
+                  <th style="padding:12px 16px;text-align:left;font-size:10px;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);border-bottom:1px solid var(--ocean-border);background:var(--ocean-card);">Longitude</th>
+                  <th style="padding:12px 16px;text-align:left;font-size:10px;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);border-bottom:1px solid var(--ocean-border);background:var(--ocean-card);">Distance Haversine</th>
+                  <th style="padding:12px 16px;text-align:left;font-size:10px;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);border-bottom:1px solid var(--ocean-border);background:var(--ocean-card);">Date Mesure</th>
+                  <th style="padding:12px 16px;text-align:left;font-size:10px;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);border-bottom:1px solid var(--ocean-border);background:var(--ocean-card);">Opérateur</th>
+                </tr>
+              </thead>
+              <tbody id="mesures-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PAGE: RAPPORT ── -->
+  <div class="page" id="page-rapport">
+    <div class="rapport-page">
+      <div class="rapport-header">
+        <div class="rapport-title">Rapport Scientifique 2016–2026</div>
+        <div class="rapport-meta">
+          Monitoring du Recul du Trait de Côte · Agadir & Taghazout · Souss-Massa Resilience Prototype
+        </div>
+        <div class="rapport-kpis">
+          <div class="rapport-kpi">
+            <div class="kpi-label">Recul Total Max</div>
+            <div class="kpi-val red">-47.3 m</div>
+          </div>
+          <div class="rapport-kpi">
+            <div class="kpi-label">Segments Analysés</div>
+            <div class="kpi-val">12</div>
+          </div>
+          <div class="rapport-kpi">
+            <div class="kpi-label">Points GPS Collectés</div>
+            <div class="kpi-val">1 846</div>
+          </div>
+          <div class="rapport-kpi">
+            <div class="kpi-label">Zones Critiques 2026</div>
+            <div class="kpi-val amber">4</div>
+          </div>
+          <div class="rapport-kpi">
+            <div class="kpi-label">Taux Annuel Moyen</div>
+            <div class="kpi-val red">4.7 m/an</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="rapport-section">
+        <div class="section-title">Contexte & Méthodologie</div>
+        <p class="rapport-text">
+          Le présent rapport documente le recul du trait de côte sur la façade littorale d'Agadir et Taghazout entre 2016 et 2026.
+          Les données ont été collectées par relevés GPS terrain à fréquence semestrielle, combinés à une analyse
+          photogrammétrique aérienne annuelle. La distance de recul entre deux points homologues est calculée
+          via la formule de Haversine, garantissant une précision métrique sur les courtes distances côtières.
+          Le système de monitoring s'appuie sur une base de données MySQL 8.0, une API REST Node.js/Express
+          et un dashboard interactif React/Leaflet.
+        </p>
+      </div>
+
+      <div class="rapport-section">
+        <div class="section-title">Résultats Principaux</div>
+        <div class="chart-body">
+          <canvas id="chart-rapport-main" style="max-height:260px;"></canvas>
+        </div>
+      </div>
+
+      <div class="rapport-section">
+        <div class="section-title">Recommandations</div>
+        <ul class="reco-list">
+          <li class="reco-item">
+            <span class="reco-icon">🚨</span>
+            <span><strong>Priorité 1 :</strong> Déploiement immédiat d'enrochements et brise-lames sur le segment Taghazout Nord (recul de 47.3 m en 10 ans). Intervention d'urgence recommandée avant l'hiver 2026.</span>
+          </li>
+          <li class="reco-item">
+            <span class="reco-icon">🏗️</span>
+            <span><strong>Priorité 2 :</strong> Rechargement sédimentaire artificiel sur la plage d'Agadir Centre (Zone 3) pour compenser le déficit de 38.1 m observé depuis 2016.</span>
+          </li>
+          <li class="reco-item">
+            <span class="reco-icon">📡</span>
+            <span><strong>Priorité 3 :</strong> Installation de 4 capteurs GPS permanents sur les zones critiques pour passage d'une surveillance semestrielle à un monitoring temps réel continu.</span>
+          </li>
+          <li class="reco-item">
+            <span class="reco-icon">📊</span>
+            <span><strong>Priorité 4 :</strong> Intégration de modèles de prédiction par régression linéaire pour anticiper le trait de côte à l'horizon 2030, sur la base des tendances 2016–2026.</span>
+          </li>
+          <li class="reco-item">
+            <span class="reco-icon">🤝</span>
+            <span><strong>Priorité 5 :</strong> Partage des données brutes avec le Ministère de l'Équipement et l'Agence du Bassin Hydraulique du Souss-Massa pour coordination régionale.</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="rapport-section">
+        <div class="section-title">Sécurité du Système d'Information</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+          <div style="background:var(--ocean-card);border:1px solid var(--ocean-border);border-radius:10px;padding:16px;">
+            <div style="font-size:20px;margin-bottom:8px;">🔐</div>
+            <div style="font-size:12px;font-weight:600;margin-bottom:4px;font-family:var(--font-display);">RBAC — 5 Rôles</div>
+            <div style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono);">super_admin · scientist · analyst · operator · viewer</div>
+          </div>
+          <div style="background:var(--ocean-card);border:1px solid var(--ocean-border);border-radius:10px;padding:16px;">
+            <div style="font-size:20px;margin-bottom:8px;">🛡️</div>
+            <div style="font-size:12px;font-weight:600;margin-bottom:4px;font-family:var(--font-display);">Anti-SQLi</div>
+            <div style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono);">Parameterized Queries · mysql2/promise pool</div>
+          </div>
+          <div style="background:var(--ocean-card);border:1px solid var(--ocean-border);border-radius:10px;padding:16px;">
+            <div style="font-size:20px;margin-bottom:8px;">📋</div>
+            <div style="font-size:12px;font-weight:600;margin-bottom:4px;font-family:var(--font-display);">Audit Log</div>
+            <div style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono);">Toutes mutations tracées · JWT 8h</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end dashboard -->
+
+<script>
+/* ══════════════════════════════════════════
+   CONFIGURATION API
+   → En local  : http://localhost:5000
+   → En prod   : remplacer par l'URL Render
+══════════════════════════════════════════ */
+const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'http://localhost:5000'
+  : 'https://erosion-coastal-guard-api.onrender.com'; // ← remplacer par ta vraie URL Render
+
+/* ══════════════════════════════════════════
+   ÉTAT GLOBAL — données chargées depuis l'API
+   (remplace les anciennes constantes hardcodées)
+══════════════════════════════════════════ */
+let SEGMENTS = [];
+let ALERTS   = [];
+let MESURES  = [];
+let JWT_TOKEN = sessionStorage.getItem('ecg_token') || null;
+let CURRENT_USER = null;
+
+/* ══════════════════════════════════════════
+   HELPER API — fetch avec token JWT automatique
+══════════════════════════════════════════ */
+async function apiGet(endpoint) {
+  const res = await fetch(API_BASE + endpoint, {
+    headers: {
+      'Authorization': 'Bearer ' + JWT_TOKEN,
+      'Content-Type': 'application/json'
+    }
+  });
+  if (res.status === 401) { doLogout(); return null; }
+  const json = await res.json();
+  return json.success ? json.data : null;
+}
+
+/* Affiche un message d'erreur dans le login */
+function showLoginError(msg) {
+  let el = document.getElementById('login-error');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'login-error';
+    el.style.cssText = 'color:#ef4444;font-size:12px;font-family:Space Mono,monospace;margin-bottom:12px;padding:8px 12px;background:rgba(239,68,68,0.1);border-radius:6px;border:1px solid rgba(239,68,68,0.3);';
+    document.querySelector('.login-btn').before(el);
+  }
+  el.textContent = '⚠ ' + msg;
+  el.style.display = 'block';
+}
+
+/* Indicateur de chargement dans le bouton login */
+function setLoginLoading(loading) {
+  const btn = document.querySelector('.login-btn');
+  btn.textContent = loading ? 'Connexion en cours...' : 'Accéder au Dashboard →';
+  btn.disabled = loading;
+  btn.style.opacity = loading ? '0.7' : '1';
+}
+
+/* ══════════════════════════════════════════
+   LOGIN / LOGOUT — connectés au vrai backend
+══════════════════════════════════════════ */
+async function doLogin() {
+  const email    = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-pwd').value;
+
+  // Masquer erreur précédente
+  const errEl = document.getElementById('login-error');
+  if (errEl) errEl.style.display = 'none';
+
+  if (!email || !password) {
+    showLoginError('Email et mot de passe requis.');
+    return;
+  }
+
+  setLoginLoading(true);
+
+  try {
+    // ✅ Appel réel à POST /api/auth/login
+    const res = await fetch(API_BASE + '/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+
+    const data = await res.json();
+
+    if (!data.success) {
+      showLoginError(data.message || 'Identifiants incorrects.');
+      setLoginLoading(false);
+      return;
+    }
+
+    // Stocker le token JWT pour toutes les futures requêtes
+    JWT_TOKEN  = data.token;
+    CURRENT_USER = data.user;
+    sessionStorage.setItem('ecg_token', JWT_TOKEN);
+
+    // Mettre à jour la navbar avec les vraies infos utilisateur
+    const role     = data.user.role;
+    const initials = role.split('_').map(w => w[0].toUpperCase()).join('').slice(0, 2);
+    document.getElementById('nav-avatar').textContent   = initials;
+    document.getElementById('nav-username').textContent = role;
+
+    // Transition vers le dashboard
+    const screen = document.getElementById('login-screen');
+    screen.style.opacity = '0';
+    setTimeout(() => {
+      screen.style.display = 'none';
+      document.getElementById('dashboard').classList.add('visible');
+      initAll();             // ← charge toutes les données depuis l'API
+    }, 600);
+
+  } catch (err) {
+    // Erreur réseau (serveur éteint, CORS, etc.)
+    showLoginError('Impossible de contacter le serveur. Vérifier que le backend est démarré.');
+    setLoginLoading(false);
+  }
+}
+
+function doLogout() {
+  // Effacer le token et réinitialiser l'état
+  JWT_TOKEN    = null;
+  CURRENT_USER = null;
+  SEGMENTS     = [];
+  ALERTS       = [];
+  MESURES      = [];
+  sessionStorage.removeItem('ecg_token');
+
+  const dash   = document.getElementById('dashboard');
+  const screen = document.getElementById('login-screen');
+  dash.classList.remove('visible');
+  screen.style.display = 'flex';
+  setTimeout(() => screen.style.opacity = '1', 50);
+
+  // Réinitialiser les champs login
+  document.getElementById('login-pwd').value = '';
+  const errEl = document.getElementById('login-error');
+  if (errEl) errEl.style.display = 'none';
+
+  // Réinitialiser les maps pour re-render propre à la reconnexion
+  if (overviewMap) { overviewMap.remove(); overviewMap = null; }
+  if (fullMap)     { fullMap.remove();     fullMap     = null; }
+  window.fullMapInit = false;
+  window.rapportChartInit = false;
+}
+
+/* ══════════════════════════════════════════
+   PAGE NAVIGATION
+══════════════════════════════════════════ */
+function showPage(name, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  btn.classList.add('active');
+
+  if (name === 'mappage' && !window.fullMapInit) {
+    setTimeout(initFullMap, 100);
+    window.fullMapInit = true;
+  }
+  if (name === 'rapport' && !window.rapportChartInit) {
+    setTimeout(initRapportChart, 100);
+    window.rapportChartInit = true;
+  }
+}
+
+/* ══════════════════════════════════════════
+   INIT ALL — charge les données depuis l'API
+   puis initialise tous les composants visuels
+══════════════════════════════════════════ */
+async function initAll() {
+  // Afficher un spinner global pendant le chargement
+  showGlobalLoader(true);
+
+  try {
+    // 3 appels en parallèle pour aller plus vite
+    const [segsRaw, alertsRaw, mesuresRaw] = await Promise.all([
+      apiGet('/api/segments'),
+      apiGet('/api/alertes'),
+      apiGet('/api/mesures')
+    ]);
+
+    // Normaliser les données API vers le format attendu par le rendu
+    // L'API retourne des champs comme zone_name, statut_erosion, etc.
+    SEGMENTS = (segsRaw || []).map(s => ({
+      id:      'Z-' + String(s.id_segment).padStart(2,'0'),
+      nom:     s.nom_segment,
+      zone:    s.zone_geographique,
+      lon_km:  parseFloat(s.area_km2) || 0,
+      recul_m: parseFloat(s.recul_total_m) || 0,
+      taux:    parseFloat(s.taux_recul_annuel) || 0,
+      statut:  s.statut_erosion || 'stable',
+      date:    s.updated_at ? s.updated_at.split('T')[0] : '—',
+      lat_deb: parseFloat(s.latitude_center) || 0,
+      lon_deb: parseFloat(s.longitude_center) || 0,
+      lat_fin: parseFloat(s.latitude_center) - 0.02 || 0,
+      lon_fin: parseFloat(s.longitude_center) - 0.02 || 0,
+    }));
+
+    ALERTS = (alertsRaw || []).map(a => ({
+      level: a.niveau === 'CRITICAL' ? 'critical'
+           : a.niveau === 'WARNING'  ? 'warning' : 'info',
+      text:  a.message,
+      meta:  (a.created_at ? a.created_at.split('T')[0] : '') +
+             (a.nom_segment ? ' · Zone: ' + a.nom_segment : '')
+    }));
+
+    MESURES = (mesuresRaw || []).map(m => ({
+      id:        'GPS-' + m.id_mesure,
+      seg:       'Z-'  + String(m.id_segment).padStart(2,'0'),
+      lat:       parseFloat(m.latitude)  || 0,
+      lon:       parseFloat(m.longitude) || 0,
+      haversine: '—',
+      date:      m.date_mesure ? m.date_mesure.split('T')[0] : '—',
+      op:        m.operateur || '—'
+    }));
+
+  } catch(err) {
+    console.error('Erreur chargement API:', err);
+    // En cas d'erreur réseau, continuer avec des tableaux vides
+  }
+
+  showGlobalLoader(false);
+
+  // Initialiser tous les composants visuels avec les données réelles
+  renderAlerts();
+  renderSegmentsTable(SEGMENTS);
+  renderMesures();
+  renderSidebarSegments();
+  initOverviewMap();
+  initCharts();
+}
+
+/* Spinner de chargement global */
+function showGlobalLoader(show) {
+  let el = document.getElementById('global-loader');
+  if (!el && show) {
+    el = document.createElement('div');
+    el.id = 'global-loader';
+    el.style.cssText = `
+      position:fixed;top:0;left:0;right:0;bottom:0;
+      background:rgba(4,13,26,0.85);z-index:8000;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      font-family:Space Mono,monospace;color:#00d4c8;font-size:13px;gap:16px;`;
+    el.innerHTML = `
+      <div style="width:36px;height:36px;border:3px solid #1a3a6b;
+        border-top-color:#00d4c8;border-radius:50%;
+        animation:spin 0.8s linear infinite;"></div>
+      <span>Chargement des données côtières...</span>
+      <style>@keyframes spin{to{transform:rotate(360deg)}}</style>`;
+    document.body.appendChild(el);
+  } else if (el && !show) {
+    el.remove();
+  }
+}
+
+/* ══════════════════════════════════════════
+   ALERTS — rendu depuis données API
+══════════════════════════════════════════ */
+function renderAlerts() {
+  const list = document.getElementById('alerts-list');
+
+  if (!ALERTS.length) {
+    list.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text-muted);
+      font-family:var(--font-mono);font-size:12px;">Aucune alerte active</div>`;
+    document.getElementById('alert-count').textContent = '0 alertes';
+    return;
+  }
+
+  list.innerHTML = ALERTS.map(a => `
+    <div class="alert-item ${a.level}">
+      <div class="alert-level">${a.level === 'critical' ? '🔴 Critique' : a.level === 'warning' ? '🟡 Avertissement' : 'ℹ️ Info'}</div>
+      <div class="alert-text">${a.text}</div>
+      <div class="alert-meta">${a.meta}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('alert-count').textContent =
+    ALERTS.filter(a => a.level !== 'info').length + ' alertes';
+}
+
+/* ══════════════════════════════════════════
+   SEGMENTS TABLE
+══════════════════════════════════════════ */
+function renderSegmentsTable(data) {
+  const tbody = document.getElementById('segments-tbody');
+  tbody.innerHTML = data.map(s => {
+    const pct = Math.min((s.recul_m / 50) * 100, 100);
+    const cls = s.statut === 'critique' ? 'high' : s.statut === 'modere' ? 'med' : 'low';
+    return `
+      <tr>
+        <td style="font-family:var(--font-mono);color:var(--teal-bright)">${s.id}</td>
+        <td style="font-weight:500">${s.nom}</td>
+        <td>${s.zone}</td>
+        <td>${s.lon_km.toFixed(1)}</td>
+        <td>
+          <div class="recul-bar-wrap">
+            <div class="recul-bar"><div class="recul-bar-fill ${cls}" style="width:${pct}%"></div></div>
+            <span style="font-family:var(--font-mono);font-size:12px;">${s.recul_m} m</span>
+          </div>
+        </td>
+        <td style="font-family:var(--font-mono)">${s.taux.toFixed(2)}</td>
+        <td><span class="td-badge ${s.statut}">${s.statut}</span></td>
+        <td style="color:var(--text-muted)">${s.date}</td>
+      </tr>`;
+  }).join('');
+}
+
+function filterData(f, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const filtered = f === 'all' ? SEGMENTS : SEGMENTS.filter(s => s.statut === f);
+  renderSegmentsTable(filtered);
+}
+
+/* ══════════════════════════════════════════
+   MESURES TABLE — rendu depuis données API
+══════════════════════════════════════════ */
+function renderMesures() {
+  const tbody = document.getElementById('mesures-tbody');
+
+  if (!MESURES.length) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text-muted);
+      font-family:var(--font-mono);font-size:12px;padding:20px;">
+      Aucune mesure GPS disponible</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = MESURES.map(m => `
+    <tr>
+      <td style="font-family:var(--font-mono);color:var(--teal-bright)">${m.id}</td>
+      <td>${m.seg}</td>
+      <td style="font-family:var(--font-mono)">${typeof m.lat === 'number' ? m.lat.toFixed(4) : m.lat}</td>
+      <td style="font-family:var(--font-mono)">${typeof m.lon === 'number' ? m.lon.toFixed(4) : m.lon}</td>
+      <td style="font-family:var(--font-mono);color:var(--amber-alert)">${m.haversine}</td>
+      <td style="color:var(--text-muted)">${m.date}</td>
+      <td>${m.op}</td>
+    </tr>
+  `).join('');
+}
+
+/* ══════════════════════════════════════════
+   SIDEBAR SEGMENTS — rendu depuis données API
+══════════════════════════════════════════ */
+function renderSidebarSegments() {
+  const el = document.getElementById('segment-list-sidebar');
+
+  if (!SEGMENTS.length) {
+    el.innerHTML = `<div style="font-size:11px;color:var(--text-muted);
+      font-family:var(--font-mono);padding:8px;">Aucune zone chargée</div>`;
+    return;
+  }
+
+  el.innerHTML = SEGMENTS.map(s => `
+    <div class="segment-item" onclick="flyToSegment(${s.lat_deb},${s.lon_deb})">
+      <span class="segment-name">${s.id} · ${s.nom}</span>
+      <span class="seg-badge ${s.statut}">${s.statut}</span>
+    </div>
+  `).join('');
+}
+
+let fullMap = null;
+function flyToSegment(lat, lon) {
+  if (fullMap) fullMap.flyTo([lat, lon], 14, { duration: 1.2 });
+}
+
+/* ══════════════════════════════════════════
+   MAP — OVERVIEW
+══════════════════════════════════════════ */
+let overviewMap = null;
+
+function initOverviewMap() {
+  if (overviewMap) return;
+
+  overviewMap = L.map('coastal-map', {
+    center: [30.465, -9.675],
+    zoom: 11,
+    zoomControl: true,
+    attributionControl: false
+  });
+
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    maxZoom: 19
+  }).addTo(overviewMap);
+
+  addCoastalLayers(overviewMap);
+}
+
+/* ══════════════════════════════════════════
+   MAP — FULL PAGE
+══════════════════════════════════════════ */
+let layer2016 = null, layer2026 = null, layerPts = null;
+
+function initFullMap() {
+  if (fullMap) return;
+
+  fullMap = L.map('full-map', {
+    center: [30.465, -9.710],
+    zoom: 11,
+    attributionControl: false
+  });
+
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    maxZoom: 19
+  }).addTo(fullMap);
+
+  addCoastalLayers(fullMap, true);
+}
+
+function addCoastalLayers(map, full = false) {
+  /* ──────────────────────────────────────────────
+     Tracé côtier continu et réaliste Agadir–Taghazout
+     (Cap Ghir → Nord Taghazout → Tamraght → Agadir Bay → Tifnit)
+  ────────────────────────────────────────────── */
+  const COAST_2026 = [
+    [30.618, -9.894], [30.606, -9.874], [30.592, -9.858],
+    [30.578, -9.840], [30.566, -9.820], [30.558, -9.792],
+    [30.550, -9.762], [30.544, -9.735], [30.541, -9.716],
+    [30.537, -9.712], [30.530, -9.711], [30.522, -9.712],
+    [30.514, -9.714], [30.506, -9.715], [30.496, -9.714],
+    [30.484, -9.710], [30.472, -9.698], [30.460, -9.678],
+    [30.446, -9.656], [30.432, -9.636], [30.420, -9.624],
+    [30.410, -9.616], [30.402, -9.608], [30.394, -9.600],
+    [30.385, -9.596], [30.374, -9.594], [30.362, -9.595],
+    [30.348, -9.600], [30.330, -9.612], [30.310, -9.626],
+    [30.286, -9.646], [30.262, -9.668], [30.238, -9.688]
+  ];
+
+  /* 2016 — décalé vers le large (ouest + légèrement nord) */
+  const COAST_2016 = COAST_2026.map(([la, lo]) => [la + 0.0028, lo - 0.0052]);
+
+  /* Zone de recul — zone intermédiaire */
+  const COAST_RECUL = COAST_2026.map(([la, lo]) => [la + 0.0016, lo - 0.0030]);
+
+  layer2016 = L.layerGroup();
+  layer2026 = L.layerGroup();
+  layerPts  = L.layerGroup();
+
+  /* ── Zone de recul (rouge pointillé) ── */
+  L.polyline(COAST_RECUL, {
+    color: '#ff6b6b', weight: 1.5,
+    dashArray: '5,6', opacity: 0.55
+  }).addTo(layer2016);
+
+  /* ── Trait 2016 (bleu-blanc pointillé) ── */
+  L.polyline(COAST_2016, {
+    color: '#7ec8e3', weight: 2.2,
+    dashArray: '9,5', opacity: 0.82
+  }).addTo(layer2016);
+
+  layer2016.addTo(map);
+
+  /* ── Trait 2026 (teal solide brillant) ── */
+  L.polyline(COAST_2026, {
+    color: '#00d4c8', weight: 3.2, opacity: 1
+  }).bindPopup('<div style="font-family:Space Mono,monospace;color:#00d4c8;font-size:12px;"><strong>Trait de côte 2026</strong></div><div style="font-size:11px;color:#8cadc8;margin-top:4px;">Ligne de référence actuelle</div>')
+    .addTo(layer2026);
+  layer2026.addTo(map);
+
+  /* ── Marqueurs de segments — cercles stylisés avec glow ── */
+  const MARKER_SEGS = [
+    { lat:30.541, lon:-9.716, id:'SEG-01', nom:'Taghazout Nord',  statut:'critique', recul:47.3, taux:4.73 },
+    { lat:30.522, lon:-9.712, id:'SEG-11', nom:'Tamraght',        statut:'critique', recul:25.7, taux:2.57 },
+    { lat:30.550, lon:-9.700, id:'SEG-06', nom:'Aourir Est',      statut:'critique', recul:41.6, taux:4.16 },
+    { lat:30.472, lon:-9.698, id:'SEG-07', nom:'Aourir Ouest',    statut:'modere',   recul:18.9, taux:1.89 },
+    { lat:30.420, lon:-9.624, id:'SEG-03', nom:'Agadir Plage N.', statut:'critique', recul:38.1, taux:3.81 },
+    { lat:30.394, lon:-9.600, id:'SEG-04', nom:'Agadir Centre',   statut:'modere',   recul:31.5, taux:3.15 },
+    { lat:30.362, lon:-9.595, id:'SEG-05', nom:'Agadir Sud',      statut:'modere',   recul:22.4, taux:2.24 },
+    { lat:30.310, lon:-9.626, id:'SEG-09', nom:'Tifnit',          statut:'stable',   recul:6.1,  taux:0.61 },
+    { lat:30.566, lon:-9.820, id:'SEG-08', nom:'Cap Ghir',        statut:'stable',   recul:8.2,  taux:0.82 },
+  ];
+
+  MARKER_SEGS.forEach(seg => {
+    const isC = seg.statut === 'critique';
+    const isM = seg.statut === 'modere';
+    const color  = isC ? '#ef4444' : isM ? '#f59e0b' : '#22c55e';
+    const fillC  = isC ? 'rgba(239,68,68,0.55)'  : isM ? 'rgba(245,158,11,0.50)' : 'rgba(34,197,94,0.18)';
+    const inner  = isC ? 'rgba(239,68,68,0.85)'  : isM ? 'rgba(245,158,11,0.80)' : 'rgba(34,197,94,0.60)';
+    const sz     = isC ? 24 : isM ? 21 : 18;
+    const cls    = isC ? 'pulse-critical' : isM ? 'pulse-warning' : 'pulse-stable';
+
+    const icon = L.divIcon({
+      className: '',
+      html: `<div class="seg-marker ${cls}" style="
+        width:${sz}px;height:${sz}px;border-radius:50%;
+        background:${fillC};
+        border:2px dashed ${color};
+        display:flex;align-items:center;justify-content:center;
+        cursor:pointer;">
+        <div style="width:${sz*0.42}px;height:${sz*0.42}px;border-radius:50%;background:${inner};"></div>
+      </div>`,
+      iconSize: [sz, sz],
+      iconAnchor: [sz/2, sz/2]
+    });
+
+    L.marker([seg.lat, seg.lon], { icon })
+      .bindPopup(`<div style="font-family:Space Mono,monospace;min-width:200px;font-size:11px;padding:2px 0;">
+        <div style="color:${color};font-size:13px;font-weight:700;margin-bottom:8px;">${seg.id} — ${seg.nom}</div>
+        <div style="color:#8cadc8;margin-bottom:4px;">Recul 2016→2026 :</div>
+        <div style="color:#ef4444;font-size:16px;font-weight:700;margin-bottom:8px;">${seg.recul} m</div>
+        <div style="color:#8cadc8;">Taux annuel : <strong style="color:#e8f4ff">${seg.taux} m/an</strong></div>
+        <div style="color:#8cadc8;margin-top:4px;">Statut : <strong style="color:${color};text-transform:uppercase;">${seg.statut}</strong></div>
+      </div>`)
+      .addTo(layerPts);
+  });
+
+  /* ── Points GPS mesures ── */
+  MESURES.forEach(m => {
+    L.circleMarker([m.lat, m.lon], {
+      radius: 3.5, color: '#3b82f6', fillColor: '#93c5fd',
+      fillOpacity: 0.9, weight: 1
+    })
+    .bindPopup(`<div style="font-family:Space Mono,monospace;font-size:11px;">
+      <strong style="color:#3b82f6">${m.id}</strong><br/>
+      ${m.lat.toFixed(4)}°N · ${Math.abs(m.lon).toFixed(4)}°W<br/>
+      Haversine : <strong style="color:#f59e0b">${m.haversine}</strong>
+    </div>`)
+    .addTo(layerPts);
+  });
+
+  layerPts.addTo(map);
+
+  /* ── Overlays scientifiques ── */
+  addMapOverlays(map);
+}
+
+/* ══════════════════════════════════════════
+   OVERLAYS SCIENTIFIQUES SUR LA CARTE
+══════════════════════════════════════════ */
+function addMapOverlays(map) {
+  const mapEl = map.getContainer();
+  if (mapEl.querySelector('.map-sci-overlay')) return;
+
+  /* Header bar */
+  const hdr = document.createElement('div');
+  hdr.className = 'map-sci-overlay map-sci-header';
+  hdr.innerHTML = `
+    <div class="map-live-dot"></div>
+    CARTE DU LITTORAL — SUPERPOSITION 2016 / 2026
+    <span style="margin-left:auto;color:var(--text-muted);font-size:10px;">AGADIR &amp; TAGHAZOUT</span>
+  `;
+  mapEl.appendChild(hdr);
+
+  /* Coordinates display */
+  const coords = document.createElement('div');
+  coords.className = 'map-sci-overlay map-sci-coords';
+  coords.id = 'map-coords-' + mapEl.id;
+  coords.innerHTML = `
+    <div style="color:#00d4c8;">▲ 30.54°N &nbsp;9.71°W · TAGHAZOUT</div>
+    <div style="color:#6b8cae;">▼ 30.38°N &nbsp;9.59°W · AGADIR</div>
+  `;
+  mapEl.appendChild(coords);
+
+  /* Legend panel */
+  const leg = document.createElement('div');
+  leg.className = 'map-sci-overlay map-sci-legend';
+  leg.innerHTML = `
+    <div class="msl-title">LÉGENDE</div>
+    <div class="msl-row"><div class="msl-line teal"></div>Trait de côte 2026</div>
+    <div class="msl-row"><div class="msl-line dashed-blue"></div>Trait de côte 2016</div>
+    <div class="msl-row"><div class="msl-line dashed-red"></div>Zone de recul 10 ans</div>
+    <div class="msl-sep"></div>
+    <div class="msl-row"><div class="msl-dot red"></div>ROUGE — Critique</div>
+    <div class="msl-row"><div class="msl-dot orange"></div>ORANGE — Vigilance</div>
+    <div class="msl-row"><div class="msl-dot green"></div>VERT — Stable</div>
+  `;
+  mapEl.appendChild(leg);
+
+  /* Live coordinate tracking on mousemove */
+  const cid = 'map-coords-' + mapEl.id;
+  map.on('mousemove', (e) => {
+    const el = document.getElementById(cid);
+    if (el) el.innerHTML = `
+      <div style="color:#00d4c8;">▲ ${e.latlng.lat.toFixed(5)}°N &nbsp;${Math.abs(e.latlng.lng).toFixed(5)}°W</div>
+      <div style="color:#6b8cae;">AGADIR &amp; TAGHAZOUT</div>
+    `;
+  });
+}
+
+function toggleLayer(name) {
+  const target = name === '2016' ? layer2016 : name === '2026' ? layer2026 : layerPts;
+  const map = name === '2016' || name === '2026' ? overviewMap : overviewMap;
+  // toggle on both maps if available
+  [overviewMap, fullMap].forEach(m => {
+    if (!m || !target) return;
+    if (m.hasLayer(target)) m.removeLayer(target);
+    else target.addTo(m);
+  });
+}
+
+/* ══════════════════════════════════════════
+   CHARTS
+══════════════════════════════════════════ */
+const CHART_DEFAULTS = {
+  color: '#e8f4ff',
+  grid: 'rgba(26,58,107,0.5)',
+  tick: '#6b8cae',
+  font: 'Space Mono'
+};
+
+function chartOpts(title) {
+  return {
+    responsive: true,
+    maintainAspectRatio: true,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: 'rgba(11,29,56,0.95)',
+        borderColor: 'rgba(0,212,200,0.3)',
+        borderWidth: 1,
+        titleColor: '#00d4c8',
+        bodyColor: '#e8f4ff',
+        titleFont: { family: 'Space Mono', size: 11 },
+        bodyFont:  { family: 'Space Mono', size: 11 },
+      }
+    },
+    scales: {
+      x: {
+        grid: { color: CHART_DEFAULTS.grid },
+        ticks: { color: CHART_DEFAULTS.tick, font: { family: CHART_DEFAULTS.font, size: 10 } }
+      },
+      y: {
+        grid: { color: CHART_DEFAULTS.grid },
+        ticks: { color: CHART_DEFAULTS.tick, font: { family: CHART_DEFAULTS.font, size: 10 } }
+      }
+    }
+  };
+}
+
+function initCharts() {
+  /* Chart 1 — Recul par segment (bar) */
+  new Chart(document.getElementById('chart-recul'), {
+    type: 'bar',
+    data: {
+      labels: SEGMENTS.map(s => s.id),
+      datasets: [{
+        data: SEGMENTS.map(s => s.recul_m),
+        backgroundColor: SEGMENTS.map(s =>
+          s.statut === 'critique' ? 'rgba(239,68,68,0.7)' :
+          s.statut === 'modere'   ? 'rgba(245,158,11,0.7)' : 'rgba(34,197,94,0.7)'
+        ),
+        borderColor: SEGMENTS.map(s =>
+          s.statut === 'critique' ? '#ef4444' :
+          s.statut === 'modere'   ? '#f59e0b' : '#22c55e'
+        ),
+        borderWidth: 1, borderRadius: 4,
+      }]
+    },
+    options: chartOpts()
+  });
+
+  /* Chart 2 — Evolution annuelle (line) */
+  const years = ['2016','2017','2018','2019','2020','2021','2022','2023','2024','2025','2026'];
+  const vals  = [2.1, 2.4, 2.8, 3.1, 3.4, 3.7, 3.9, 4.2, 4.4, 4.6, 4.73];
+  new Chart(document.getElementById('chart-evolution'), {
+    type: 'line',
+    data: {
+      labels: years,
+      datasets: [{
+        data: vals,
+        borderColor: '#00d4c8',
+        backgroundColor: 'rgba(0,212,200,0.08)',
+        pointBackgroundColor: '#00d4c8',
+        pointRadius: 3, tension: 0.4, fill: true,
+      }]
+    },
+    options: chartOpts()
+  });
+
+  /* Chart 3 — Statuts (doughnut) */
+  const counts = {
+    critique: SEGMENTS.filter(s => s.statut === 'critique').length,
+    modere:   SEGMENTS.filter(s => s.statut === 'modere').length,
+    stable:   SEGMENTS.filter(s => s.statut === 'stable').length,
+  };
+  new Chart(document.getElementById('chart-statuts'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Critique','Modéré','Stable'],
+      datasets: [{
+        data: [counts.critique, counts.modere, counts.stable],
+        backgroundColor: ['rgba(239,68,68,0.8)','rgba(245,158,11,0.8)','rgba(34,197,94,0.8)'],
+        borderColor: ['#ef4444','#f59e0b','#22c55e'],
+        borderWidth: 2,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      cutout: '65%',
+      plugins: {
+        legend: {
+          display: true, position: 'bottom',
+          labels: { color: '#6b8cae', font: { family: 'Space Mono', size: 10 }, boxWidth: 10 }
+        },
+        tooltip: {
+          backgroundColor: 'rgba(11,29,56,0.95)',
+          borderColor: 'rgba(0,212,200,0.3)', borderWidth: 1,
+          titleColor: '#00d4c8', bodyColor: '#e8f4ff',
+          titleFont: { family: 'Space Mono', size: 11 },
+          bodyFont:  { family: 'Space Mono', size: 11 },
+        }
+      }
+    }
+  });
+
+  /* Chart 4 — Mesures par année */
+  new Chart(document.getElementById('chart-mesures-temps'), {
+    type: 'bar',
+    data: {
+      labels: ['2016','2017','2018','2019','2020','2021','2022','2023','2024','2025','2026'],
+      datasets: [{
+        label: 'Mesures collectées',
+        data: [124, 138, 145, 162, 170, 158, 182, 195, 210, 218, 144],
+        backgroundColor: 'rgba(59,130,246,0.6)',
+        borderColor: '#3b82f6', borderWidth: 1, borderRadius: 4,
+      }]
+    },
+    options: chartOpts()
+  });
+
+  /* Chart 5 — Haversine par segment */
+  new Chart(document.getElementById('chart-haversine'), {
+    type: 'bar',
+    data: {
+      labels: SEGMENTS.slice(0,8).map(s => s.id),
+      datasets: [{
+        label: 'Distance (m)',
+        data: SEGMENTS.slice(0,8).map(s => s.recul_m),
+        backgroundColor: 'rgba(245,158,11,0.6)',
+        borderColor: '#f59e0b', borderWidth: 1, borderRadius: 4,
+      }]
+    },
+    options: { ...chartOpts(), indexAxis: 'y' }
+  });
+}
+
+function initRapportChart() {
+  const opts = chartOpts();
+  opts.plugins = opts.plugins || {};
+  opts.plugins.legend = {
+    display: true, position: 'bottom',
+    labels: { color: '#6b8cae', font: { family: 'Space Mono', size: 10 }, boxWidth: 10 }
+  };
+
+  new Chart(document.getElementById('chart-rapport-main'), {
+    type: 'bar',
+    data: {
+      labels: SEGMENTS.map(s => s.nom.split(' ').slice(0,2).join(' ')),
+      datasets: [
+        {
+          label: 'Recul total (m)',
+          data: SEGMENTS.map(s => s.recul_m),
+          backgroundColor: 'rgba(239,68,68,0.65)',
+          borderColor: '#ef4444', borderWidth: 1, borderRadius: 3,
+        },
+        {
+          label: 'Taux annuel (m/an)',
+          data: SEGMENTS.map(s => s.taux),
+          backgroundColor: 'rgba(0,212,200,0.5)',
+          borderColor: '#00d4c8', borderWidth: 1, borderRadius: 3,
+        }
+      ]
+    },
+    options: opts
+  });
+}
+</script>
+</body>
+</html>

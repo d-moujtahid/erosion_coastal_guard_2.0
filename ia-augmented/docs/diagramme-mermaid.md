@@ -1,0 +1,273 @@
+# Diagramme MCD - Erosion Coastal Guard
+
+Voici le Modèle Conceptuel de Données généré avec Mermaid.js.
+
+```mermaid
+erDiagram
+    %% ========== ENTITÉS PRINCIPALES ==========
+    
+    ZONE_COTIERE {
+        uuid id_zone PK
+        string code UK
+        string nom
+        geometry geom_polygon
+        enum type_cote
+        enum classification_actuelle
+        enum classification_precedente
+        decimal facteur_risque
+        decimal recul_annuel_moyen
+        decimal recul_projete_100ans
+        string region
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    UTILISATEUR {
+        uuid id_utilisateur PK
+        string nom
+        string prenom
+        string email UK
+        string mot_de_passe_hash
+        enum role
+        string telephone
+        string organisation
+        uuid zone_assignee_id FK
+        boolean actif
+        timestamp created_at
+        timestamp derniere_connexion
+    }
+    
+    %% ========== POINTS ET MESURES ==========
+    
+    POINT_MESURE {
+        uuid id_point PK
+        uuid id_zone FK
+        string code_point UK
+        decimal latitude
+        decimal longitude
+        geometry geom_point
+        string description_repere
+        boolean actif
+        date date_installation
+        timestamp created_at
+    }
+    
+    RELEVE_TERRAIN {
+        uuid id_releve PK
+        uuid id_point FK
+        uuid id_agent FK
+        uuid id_validateur FK
+        timestamp date_mesure
+        decimal distance_trait_cote
+        enum methode_mesure
+        decimal coefficient_maree
+        enum heure_maree
+        enum conditions_meteo
+        decimal vitesse_vent_kmh
+        decimal hauteur_vagues_m
+        enum type_evenement
+        string notes_terrain
+        enum statut_validation
+        timestamp date_validation
+        string motif_rejet
+        timestamp created_at
+    }
+    
+    PHOTO_RELEVE {
+        uuid id_photo PK
+        uuid id_releve FK
+        string url_stockage
+        decimal latitude
+        decimal longitude
+        decimal orientation_degres
+        string description
+        timestamp created_at
+    }
+    
+    CALCUL_RECUL {
+        uuid id_calcul PK
+        uuid id_point FK
+        uuid id_releve_t1 FK
+        uuid id_releve_t2 FK
+        decimal recul_metres
+        integer duree_jours
+        decimal recul_annualise
+        boolean est_evenement_tempete
+        timestamp created_at
+    }
+    
+    %% ========== HISTORIQUE ET ALERTES ==========
+    
+    HISTORIQUE_CLASSIFICATION {
+        uuid id_historique PK
+        uuid id_zone FK
+        enum classification_avant
+        enum classification_apres
+        timestamp date_changement
+        uuid id_expert_1 FK
+        uuid id_expert_2 FK
+        uuid id_admin FK
+        decimal recul_annuel_base
+        string justification
+        enum type_declencheur
+    }
+    
+    ALERTE {
+        uuid id_alerte PK
+        uuid id_zone FK
+        uuid id_releve_declencheur FK
+        enum type_alerte
+        enum niveau
+        string titre
+        string description
+        decimal valeur_mesuree
+        decimal seuil_depasse
+        enum statut
+        uuid id_createur FK
+        uuid id_traiteur FK
+        timestamp date_creation
+        timestamp date_traitement
+        boolean notif_protection_civile
+    }
+    
+    %% ========== PARCELLES ET PERMIS ==========
+    
+    PARCELLE {
+        uuid id_parcelle PK
+        string reference_cadastrale UK
+        uuid id_zone FK
+        geometry geom_polygon
+        decimal surface_m2
+        decimal distance_trait_cote_m
+        string proprietaire_nom
+        string proprietaire_contact
+        enum classification_actuelle
+        boolean dans_dpm_100m
+        timestamp created_at
+        timestamp updated_at
+    }
+    
+    DEMANDE_PERMIS {
+        uuid id_demande PK
+        string reference UK
+        uuid id_demandeur FK
+        uuid id_zone FK
+        uuid id_parcelle FK
+        timestamp date_depot
+        string type_projet
+        decimal surface_construite_m2
+        integer nb_etages
+        enum statut
+        enum classification_zone_au_depot
+        decimal distance_trait_cote_m
+        boolean blocage_automatique
+        string motif_blocage
+        uuid id_urbaniste FK
+        timestamp date_decision
+        string motif_decision
+        boolean etude_geotechnique_requise
+        boolean etude_geotechnique_fournie
+    }
+    
+    %% ========== NOTIFICATIONS ET AUDIT ==========
+    
+    NOTIFICATION {
+        uuid id_notification PK
+        uuid id_destinataire FK
+        uuid id_alerte FK
+        uuid id_demande FK
+        enum type_evenement
+        enum canal
+        string sujet
+        string corps
+        enum statut_envoi
+        timestamp date_creation
+        timestamp date_envoi
+    }
+    
+    AUDIT_LOG {
+        uuid id_log PK
+        uuid id_utilisateur FK
+        timestamp timestamp_action
+        string table_cible
+        uuid id_enregistrement
+        enum action
+        string champ_modifie
+        string valeur_avant
+        string valeur_apres
+        inet adresse_ip
+        string user_agent
+        string motif
+    }
+    
+    RAPPORT {
+        uuid id_rapport PK
+        uuid id_zone FK
+        uuid id_auteur FK
+        string titre
+        enum type_rapport
+        date periode_debut
+        date periode_fin
+        string contenu
+        string url_pdf
+        boolean est_public
+        enum statut
+        timestamp date_publication
+        timestamp created_at
+    }
+    
+    CONFIGURATION_SEUILS {
+        uuid id_config PK
+        string cle UK
+        string valeur
+        enum type_valeur
+        string description
+        string categorie
+        enum modifiable_par
+        uuid id_modificateur FK
+        timestamp updated_at
+    }
+
+    %% ========== RELATIONS ==========
+    
+    %% Relations ZONE_COTIERE
+    ZONE_COTIERE ||--o{ POINT_MESURE : "contient (1-N)"
+    ZONE_COTIERE ||--o{ HISTORIQUE_CLASSIFICATION : "archive (1-N)"
+    ZONE_COTIERE ||--o{ ALERTE : "génère (1-N)"
+    ZONE_COTIERE ||--o{ RAPPORT : "documente (1-N)"
+    ZONE_COTIERE ||--o{ PARCELLE : "inclut (1-N)"
+    ZONE_COTIERE ||--o{ DEMANDE_PERMIS : "concerne (1-N)"
+    ZONE_COTIERE }o--o{ UTILISATEUR : "assignée à (0,1-0,N)"
+    
+    %% Relations POINT_MESURE
+    POINT_MESURE ||--o{ RELEVE_TERRAIN : "a pour relevés (1-N)"
+    POINT_MESURE ||--o{ CALCUL_RECUL : "calcule (1-N)"
+    
+    %% Relations RELEVE_TERRAIN
+    RELEVE_TERRAIN ||--o{ PHOTO_RELEVE : "illustre (1-N)"
+    RELEVE_TERRAIN ||--o{ CALCUL_RECUL : "utilisé dans (1-N)"
+    RELEVE_TERRAIN }o--o{ ALERTE : "déclenche (0,1-0,N)"
+    
+    %% Relations UTILISATEUR
+    UTILISATEUR ||--o{ RELEVE_TERRAIN : "saisit (1-N)"
+    UTILISATEUR ||--o{ AUDIT_LOG : "trace (1-N)"
+    UTILISATEUR ||--o{ NOTIFICATION : "reçoit (1-N)"
+    UTILISATEUR ||--o{ DEMANDE_PERMIS : "dépose (1-N)"
+    UTILISATEUR ||--o{ RAPPORT : "produit (1-N)"
+    UTILISATEUR ||--o{ HISTORIQUE_CLASSIFICATION : "valide (1-N)"
+    
+    %% Relations PARCELLE
+    PARCELLE ||--o{ DEMANDE_PERMIS : "objet de (1-N)"
+    
+    %% Relations ALERTE et DEMANDE
+    ALERTE ||--o{ NOTIFICATION : "notifie via (1-N)"
+    DEMANDE_PERMIS ||--o{ NOTIFICATION : "notifie via (1-N)"
+    
+    %% Relations CONFIGURATION
+    CONFIGURATION_SEUILS }o--o{ UTILISATEUR : "modifiée par (0,1-0,N)"
+    
+    %% Relations spécifiques
+    RELEVE_TERRAIN }o--|| UTILISATEUR : "validé par (expert)"
+    RELEVE_TERRAIN }o--|| UTILISATEUR : "créé par (agent)"
+    DEMANDE_PERMIS }o--|| UTILISATEUR : "instruit par (urbaniste)"
+

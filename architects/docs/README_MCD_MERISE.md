@@ -18,7 +18,7 @@
 6. [Règles de passage MCD → MLD](#6-règles-de-passage-mcd--mld)
 7. [Les 10 Tables du MLD](#7-les-10-tables-du-mld)
 8. [Schéma MLD final](#8-schéma-mld-final)
-9. [Architectes vs Augmenteds](#9-architectes-vs-augmenteds--tableau-qa)
+   
 
 ---
 
@@ -564,24 +564,7 @@ alerts(6)
   sensor_id FK → sensors
 ```
 
----
 
-## 9. Architectes vs Augmenteds — Tableau QA
-
-| Critère | Architectes (Manuel) | Augmenteds (IA) | Vainqueur attendu |
-|---|---|---|---|
-| **Temps de modélisation MCD** | ~3h | ~15 min | Augmenteds |
-| **Cohérence des cardinalités** | Risque d'erreur humaine | Logique mais peut halluciner | Variable |
-| **Détection de la N:M** | Explicite par méthode | Dépend du prompt | Architectes |
-| **Scripts SQL générés** | Validés manuellement | Peuvent contenir des erreurs | À vérifier |
-| **Table pivot `RETREAT_MEASUREMENTS`** | Construite selon règles MERISE | Peut oublier les attributs Haversine | Architectes |
-| **Trigger Haversine** | Codé à la main | Généré mais à auditer | Augmenteds (rapidité) |
-| **Documentation** | Complète mais lente | Rapide mais peut être superficielle | Augmenteds |
-
-> **Note QA** : La colonne `computed_by ENUM('manuel','IA')` dans `RETREAT_MEASUREMENTS`
-> permet de tracer précisément l'origine de chaque mesure pour le rapport final.
-
----
 
 ## Ressources complémentaires
 

@@ -2,8 +2,8 @@
 ### Monitoring du Recul du Trait de Côte · Agadir & Taghazout · Souss-Massa 2016→2026
 
 > **Projet** : SIBD — Souss-Massa Resilience Prototype  
-> **Équipe** : Équipe 9 | Architects + Augmenteds  
-> **Encadrant** : Pr. S. EL-ATEIF — ENSIASD Taroudant  
+> **Équipe** : Équipe 9 | Architects   
+> **Encadrant** : Pr. S. EL-ATEIF 
 > **Année** : 2025–2026
 
 ---

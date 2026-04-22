@@ -18,7 +18,6 @@
 |----------------------|---------------------------------------------------|
 | **Projet**           | Erosion-Coastal Guard — Sujet 9                   |
 | **Programme**        | Souss-Massa Resilience Prototype                  |
-| **Module**           | SIBD — Systèmes d'Information & Bases de Données  |
 | **Encadrant**        | Pr. S. EL-ATEIF                                   |
 | **Année**            | 2025 – 2026                                       |
 | **Période analysée** | 2016 → 2026 (10 ans de recul côtier)              |
@@ -220,6 +219,12 @@ node server.js
 | QA IA vs Manuel | Tests T1→T8 + rapport comparatif | ✅ |
 
 ---
+---
 
+## 🎥 Démonstration vidéo
+### 🏛️ Équipe Architects : https://youtu.be/fho3aFMy6dM?si=PgFCRQMXiBc_P47M
+### 🤖 Équipe IA-Augmented  : https://youtu.be/ydt-AJuuXa4?si=8G1uCs06GYY4h1Kr
+
+---
 *Projet académique — ENSIASD Taroudant · Souss-Massa Resilience Prototype · 2025–2026*  
 *Encadrant : Pr. S. EL-ATEIF | Module SIBD*

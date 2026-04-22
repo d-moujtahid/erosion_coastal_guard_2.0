@@ -45,6 +45,7 @@ Ce projet s'inscrit dans une simulation professionnelle comparant deux approches
 ---
 
 ## 🖥️ Aperçu du dashboard
+Lien : https://youtu.be/fho3aFMy6dM?si=H1_JfgeiUhm4mnsb
 
 Le dashboard est composé de **6 onglets** principaux :
 
